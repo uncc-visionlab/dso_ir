@@ -51,7 +51,7 @@ PixelSelector::PixelSelector(int w, int h)
 	ths = new float[(w/32)*(h/32)+100];
 	thsSmoothed = new float[(w/32)*(h/32)+100];
 
-	allowFast=false;
+	allowFast=true;
 	gradHistFrame=0;
 }
 
@@ -149,29 +149,29 @@ int PixelSelector::makeMaps(
 	int idealPotential = currentPotential;
 
 
-//	if(setting_pixelSelectionUseFast>0 && allowFast)
-//	{
-//		memset(map_out, 0, sizeof(float)*wG[0]*hG[0]);
-//		std::vector<cv::KeyPoint> pts;
-//		cv::Mat img8u(hG[0],wG[0],CV_8U);
-//		for(int i=0;i<wG[0]*hG[0];i++)
-//		{
-//			float v = fh->dI[i][0]*0.8;
-//			img8u.at<uchar>(i) = (!std::isfinite(v) || v>255) ? 255 : v;
-//		}
-//		cv::FAST(img8u, pts, setting_pixelSelectionUseFast, true);
-//		for(unsigned int i=0;i<pts.size();i++)
-//		{
-//			int x = pts[i].pt.x+0.5;
-//			int y = pts[i].pt.y+0.5;
-//			map_out[x+y*wG[0]]=1;
-//			numHave++;
-//		}
-//
-//		printf("FAST selection: got %f / %f!\n", numHave, numWant);
-//		quotia = numWant / numHave;
-//	}
-//	else
+	if(setting_pixelSelectionUseFast>0 && allowFast)
+	{
+		memset(map_out, 0, sizeof(float)*wG[0]*hG[0]);
+		std::vector<cv::KeyPoint> pts;
+		cv::Mat img8u(hG[0],wG[0],CV_8U);
+		for(int i=0;i<wG[0]*hG[0];i++)
+		{
+			float v = fh->dI[i][0]*0.8;
+			img8u.at<uchar>(i) = (!std::isfinite(v) || v>255) ? 255 : v;
+		}
+		cv::FAST(img8u, pts, setting_pixelSelectionUseFast, true);
+		for(unsigned int i=0;i<pts.size();i++)
+		{
+			int x = pts[i].pt.x+0.5;
+			int y = pts[i].pt.y+0.5;
+			map_out[x+y*wG[0]]=1;
+			numHave++;
+		}
+
+		printf("FAST selection: got %f / %f!\n", numHave, numWant);
+		quotia = numWant / numHave;
+	}
+	else
 	{
 
 
