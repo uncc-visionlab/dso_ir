@@ -159,7 +159,7 @@ int PixelSelector::makeMaps(
 			float v = fh->dI[i][0]*0.8;
 			img8u.at<uchar>(i) = (!std::isfinite(v) || v>255) ? 255 : v;
 		}
-		cv::FAST(img8u, pts, setting_pixelSelectionUseFast, true);
+		cv::SIFT(img8u, pts, setting_pixelSelectionUseFast, true);
 		for(unsigned int i=0;i<pts.size();i++)
 		{
 			int x = pts[i].pt.x+0.5;
@@ -171,62 +171,62 @@ int PixelSelector::makeMaps(
 		printf("FAST selection: got %f / %f!\n", numHave, numWant);
 		quotia = numWant / numHave;
 	}
-	else
-	{
+	// else
+	// {
 
 
 
 
-		// the number of selected pixels behaves approximately as
-		// K / (pot+1)^2, where K is a scene-dependent constant.
-		// we will allow sub-selecting pixels by up to a quotia of 0.25, otherwise we will re-select.
+	// 	// the number of selected pixels behaves approximately as
+	// 	// K / (pot+1)^2, where K is a scene-dependent constant.
+	// 	// we will allow sub-selecting pixels by up to a quotia of 0.25, otherwise we will re-select.
 
-		if(fh != gradHistFrame) makeHists(fh);
+	// 	if(fh != gradHistFrame) makeHists(fh);
 
-		// select!
-		Eigen::Vector3i n = this->select(fh, map_out,currentPotential, thFactor);
+	// 	// select!
+	// 	Eigen::Vector3i n = this->select(fh, map_out,currentPotential, thFactor);
 
-		// sub-select!
-		numHave = n[0]+n[1]+n[2];
-		quotia = numWant / numHave;
+	// 	// sub-select!
+	// 	numHave = n[0]+n[1]+n[2];
+	// 	quotia = numWant / numHave;
 
-		// by default we want to over-sample by 40% just to be sure.
-		float K = numHave * (currentPotential+1) * (currentPotential+1);
-		idealPotential = sqrtf(K/numWant)-1;	// round down.
-		if(idealPotential<1) idealPotential=1;
+	// 	// by default we want to over-sample by 40% just to be sure.
+	// 	float K = numHave * (currentPotential+1) * (currentPotential+1);
+	// 	idealPotential = sqrtf(K/numWant)-1;	// round down.
+	// 	if(idealPotential<1) idealPotential=1;
 
-		if( recursionsLeft>0 && quotia > 1.25 && currentPotential>1)
-		{
-			//re-sample to get more points!
-			// potential needs to be smaller
-			if(idealPotential>=currentPotential)
-				idealPotential = currentPotential-1;
+	// 	if( recursionsLeft>0 && quotia > 1.25 && currentPotential>1)
+	// 	{
+	// 		//re-sample to get more points!
+	// 		// potential needs to be smaller
+	// 		if(idealPotential>=currentPotential)
+	// 			idealPotential = currentPotential-1;
 
-	//		printf("PixelSelector: have %.2f%%, need %.2f%%. RESAMPLE with pot %d -> %d.\n",
-	//				100*numHave/(float)(wG[0]*hG[0]),
-	//				100*numWant/(float)(wG[0]*hG[0]),
-	//				currentPotential,
-	//				idealPotential);
-			currentPotential = idealPotential;
-			return makeMaps(fh,map_out, density, recursionsLeft-1, plot,thFactor);
-		}
-		else if(recursionsLeft>0 && quotia < 0.25)
-		{
-			// re-sample to get less points!
+	// //		printf("PixelSelector: have %.2f%%, need %.2f%%. RESAMPLE with pot %d -> %d.\n",
+	// //				100*numHave/(float)(wG[0]*hG[0]),
+	// //				100*numWant/(float)(wG[0]*hG[0]),
+	// //				currentPotential,
+	// //				idealPotential);
+	// 		currentPotential = idealPotential;
+	// 		return makeMaps(fh,map_out, density, recursionsLeft-1, plot,thFactor);
+	// 	}
+	// 	else if(recursionsLeft>0 && quotia < 0.25)
+	// 	{
+	// 		// re-sample to get less points!
 
-			if(idealPotential<=currentPotential)
-				idealPotential = currentPotential+1;
+	// 		if(idealPotential<=currentPotential)
+	// 			idealPotential = currentPotential+1;
 
-	//		printf("PixelSelector: have %.2f%%, need %.2f%%. RESAMPLE with pot %d -> %d.\n",
-	//				100*numHave/(float)(wG[0]*hG[0]),
-	//				100*numWant/(float)(wG[0]*hG[0]),
-	//				currentPotential,
-	//				idealPotential);
-			currentPotential = idealPotential;
-			return makeMaps(fh,map_out, density, recursionsLeft-1, plot,thFactor);
+	// //		printf("PixelSelector: have %.2f%%, need %.2f%%. RESAMPLE with pot %d -> %d.\n",
+	// //				100*numHave/(float)(wG[0]*hG[0]),
+	// //				100*numWant/(float)(wG[0]*hG[0]),
+	// //				currentPotential,
+	// //				idealPotential);
+	// 		currentPotential = idealPotential;
+	// 		return makeMaps(fh,map_out, density, recursionsLeft-1, plot,thFactor);
 
-		}
-	}
+	// 	}
+	// }
 
 	int numHaveSub = numHave;
 	if(quotia < 0.95)
