@@ -25,6 +25,8 @@
 #pragma once
  
 #include "util/NumType.h"
+#include <opencv2/opencv.hpp>
+//#include <opencv2/nonfree/nonfree.hpp>
 
 namespace dso
 {
@@ -56,7 +58,7 @@ private:
 
 
 	unsigned char* randomPattern;
-
+        bool setting_pixelSelectionUseFast;
 
 	int* gradHist;
 	float* ths;

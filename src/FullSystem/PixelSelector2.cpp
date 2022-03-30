@@ -50,7 +50,7 @@ PixelSelector::PixelSelector(int w, int h)
 	gradHist = new int[100*(1+w/32)*(1+h/32)];
 	ths = new float[(w/32)*(h/32)+100];
 	thsSmoothed = new float[(w/32)*(h/32)+100];
-
+        setting_pixelSelectionUseFast = true;
 	allowFast=true;
 	gradHistFrame=0;
 }
