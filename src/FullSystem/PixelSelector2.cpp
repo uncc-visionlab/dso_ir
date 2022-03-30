@@ -159,7 +159,8 @@ int PixelSelector::makeMaps(
 			float v = fh->dI[i][0]*0.8;
 			img8u.at<uchar>(i) = (!std::isfinite(v) || v>255) ? 255 : v;
 		}
-		cv::SIFT(img8u, pts, setting_pixelSelectionUseFast, true);
+		cv::FAST(img8u, pts, setting_pixelSelectionUseFast, true);
+		//cv::SIFT(img8u, pts, setting_pixelSelectionUseFast, true);
 		for(unsigned int i=0;i<pts.size();i++)
 		{
 			int x = pts[i].pt.x+0.5;
