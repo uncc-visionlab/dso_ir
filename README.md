@@ -67,6 +67,7 @@ After cloning, just run `git submodule update --init` to include this.  It trans
 #### 2.3 Build
 
 		cd dso
+		git submodule update --init
 		mkdir build
 		cd build
 		cmake ..
