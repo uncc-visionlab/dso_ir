@@ -13,7 +13,7 @@ set(LIBRARY_OUTPUT_PATH lib)
 
 # required libraries
 add_subdirectory(thirdparty)
-find_package(Pangolin 0.2 REQUIRED)
+find_package(Pangolin 0.4 REQUIRED)
 
 link_directories(
     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
@@ -26,7 +26,7 @@ find_package(Eigen3 REQUIRED)
 find_package(Boost COMPONENTS system thread) 
 find_package(SuiteParse REQUIRED)
 find_package(LIBZIP QUIET)
-find_package(OpenCV QUIET)
+find_package(OpenCV REQUIRED PATHS /home/server/opencv/lib/cmake/opencv4 NO_DEFAULT_PATH QUIET)
 
 # flags
 add_definitions("-DENABLE_SSE")
