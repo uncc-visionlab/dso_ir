@@ -10,16 +10,22 @@ set(BUILD_TYPE Release)
 
 set(EXECUTABLE_OUTPUT_PATH bin)
 set(LIBRARY_OUTPUT_PATH lib)
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
 # required libraries
-find_package(SuiteParse REQUIRED)
-find_package(Eigen3 REQUIRED)
-find_package(Boost COMPONENTS system thread) 
+add_subdirectory(thirdparty)
+find_package(Pangolin 0.2 REQUIRED)
+
+link_directories(
+    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
+    ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
+)
 
 # optional libraries
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+find_package(Eigen3 REQUIRED)
+find_package(Boost COMPONENTS system thread) 
+find_package(SuiteParse REQUIRED)
 find_package(LIBZIP QUIET)
-find_package(Pangolin 0.2 QUIET)
 find_package(OpenCV QUIET)
 
 # flags
@@ -68,6 +74,7 @@ include_directories(
 # decide if we have pangolin
 if (Pangolin_FOUND)
 	message("--- found PANGOLIN, compiling dso_pangolin library.")
+        include_directories(${PROJECT_BINARY_DIR}/thirdparty/Pangolin/include)
 	include_directories( ${Pangolin_INCLUDE_DIRS} ) 
 	set(dso_pangolin_SOURCE_FILES 
 	  ${PROJECT_SOURCE_DIR}/src/IOWrapper/Pangolin/KeyFrameDisplay.cpp
@@ -111,7 +118,7 @@ endif()
 # compile main library.
 include_directories( ${CSPARSE_INCLUDE_DIR} ${CHOLMOD_INCLUDE_DIR}) 
 add_library(dso ${dso_SOURCE_FILES} ${dso_opencv_SOURCE_FILES} ${dso_pangolin_SOURCE_FILES})
-
+target_link_libraries(dso ${Pangolin_LIBRARIES})
 #set_property( TARGET dso APPEND_STRING PROPERTY COMPILE_FLAGS -Wall )
 
 
