@@ -18,7 +18,12 @@ find_path(LIBZIP_INCLUDE_DIR_ZIPCONF
     HINTS ${PC_LIBZIP_INCLUDE_DIRS})
 
 find_library(LIBZIP_LIBRARY
-    NAMES zip)
+    NAMES zip
+    PATHS
+    /usr/lib/x86_64-linux-gnu
+    /usr/local/lib
+    /usr/lib
+)
 
 include(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(
