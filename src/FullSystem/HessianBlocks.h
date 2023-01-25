@@ -115,6 +115,7 @@ struct FrameHessian
 	// constant info & pre-calculated values
 	//DepthImageWrap* frame;
 	FrameShell* shell;
+    FrameHessian* prev_fh;
 
 	Eigen::Vector3f* dI;				 // trace, fine tracking. Used for direction select (not for gradient histograms etc.)
 	Eigen::Vector3f* dIp[PYR_LEVELS];	 // coarse tracking / coarse initializer. NAN in [0] only.
@@ -400,7 +401,7 @@ struct CalibHessian
 
 
 // hessian component associated with one point.
-struct PointHessian
+struct PointHessianBase
 {
 	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 	static int instanceCounter;
@@ -459,8 +460,8 @@ struct PointHessian
 
 
 	void release();
-	PointHessian(const ImmaturePoint* const rawPoint, CalibHessian* Hcalib);
-    inline ~PointHessian() {assert(efPoint==0); release(); instanceCounter--;}
+	PointHessianBase(const ImmaturePoint* const rawPoint, CalibHessian* Hcalib);
+    inline ~PointHessianBase() {assert(efPoint==0); release(); instanceCounter--;}
 
 
 	inline bool isOOB(const std::vector<FrameHessian*>& toKeep, const std::vector<FrameHessian*>& toMarg) const
@@ -497,6 +498,11 @@ struct PointHessian
 
 };
 
+struct PointHessian : PointHessianBase {
+    float color_prev[MAX_RES_PER_POINT];			// colors in host frame
+    PointHessian(const ImmaturePoint* const rawPoint, CalibHessian* Hcalib) : PointHessianBase(rawPoint, Hcalib) {}
+    inline ~PointHessian() {};
+};
 
 
 

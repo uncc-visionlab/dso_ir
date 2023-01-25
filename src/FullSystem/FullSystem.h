@@ -136,7 +136,8 @@ public:
 	virtual ~FullSystem();
 
 	// adds a new frame, and creates point & residual structs.
-	void addActiveFrame(ImageAndExposure* image, int id);
+    void addActiveFrame(ImageAndExposure* image, int id);
+    void addActiveFrameIR(ImageAndExposure* image, int id);
 
 	// marginalizes a frame. drops / marginalizes points & residuals.
 	void marginalizeFrame(FrameHessian* frame);
@@ -270,6 +271,7 @@ private:
 	CoarseDistanceMap* coarseDistanceMap;
 
 	std::vector<FrameHessian*> frameHessians;	// ONLY changed in marginalizeFrame and addFrame.
+    FrameHessian* prev_fh;
 	std::vector<PointFrameResidual*> activeResiduals;
 	float currentMinActDist;
 

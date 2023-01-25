@@ -464,7 +464,7 @@ int main( int argc, char** argv )
             int i = idsToPlay[ii];
 
 
-            ImageAndExposure* img;
+            ImageAndExposure *img;
             if(preload)
                 img = preloadedImages[ii];
             else
@@ -489,8 +489,8 @@ int main( int argc, char** argv )
 
 
 
-            if(!skipFrame) fullSystem->addActiveFrame(img, i);
-
+//            if(!skipFrame) fullSystem->addActiveFrame(img, i);
+            if(!skipFrame) fullSystem->addActiveFrameIR(img, i);
 
 
 

@@ -32,7 +32,7 @@ namespace dso
 {
 
 
-PointHessian::PointHessian(const ImmaturePoint* const rawPoint, CalibHessian* Hcalib)
+PointHessianBase::PointHessianBase(const ImmaturePoint* const rawPoint, CalibHessian* Hcalib)
 {
 	instanceCounter++;
 	host = rawPoint->host;
@@ -64,7 +64,7 @@ PointHessian::PointHessian(const ImmaturePoint* const rawPoint, CalibHessian* Hc
 }
 
 
-void PointHessian::release()
+void PointHessianBase::release()
 {
 	for(unsigned int i=0;i<residuals.size();i++) delete residuals[i];
 	residuals.clear();

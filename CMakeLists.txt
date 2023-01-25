@@ -4,8 +4,9 @@ PROJECT(${PROJECT_NAME})
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8.12)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
-set(OPENCV_DIR /home/server/opencv)
-set(BUILD_TYPE Release)
+set(OPENCV_DIR /usr/lib/x86_64-linux-gnu/)
+#set(OPENCV_DIR /usr/lib/x86_64-linux-gnu/)
+#set(BUILD_TYPE Release)
 #set(BUILD_TYPE RelWithDebInfo)
 
 set(EXECUTABLE_OUTPUT_PATH bin)
@@ -13,7 +14,7 @@ set(LIBRARY_OUTPUT_PATH lib)
 
 # required libraries
 add_subdirectory(thirdparty)
-find_package(Pangolin 0.4 REQUIRED)
+find_package(Pangolin 0.8 REQUIRED)
 
 link_directories(
     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
@@ -29,14 +30,20 @@ set(LIBZIP_INCLUDE_DIR_ZIP /usr/include)
 set(LIBZIP_INCLUDE_DIR_ZIPCONF /usr/lib/x86_64-linux-gnu/libzip/include)
 set(LIBZIP_LIBRARY zip)
 find_package(LIBZIP QUIET)
-find_package(OpenCV REQUIRED PATHS /home/server/opencv/lib/cmake/opencv4 NO_DEFAULT_PATH QUIET)
+#find_package(OpenCV REQUIRED PATHS /home/server/opencv/lib/cmake/opencv4 NO_DEFAULT_PATH QUIET)
+find_package(OpenCV REQUIRED PATHS QUIET)
 
 # flags
 add_definitions("-DENABLE_SSE")
 set(CMAKE_CXX_FLAGS
-   "${SSE_FLAGS} -O3 -g -std=c++0x -march=native"
-#   "${SSE_FLAGS} -O3 -g -std=c++0x -fno-omit-frame-pointer"
+   "${SSE_FLAGS} -O3 -g -march=native"
+#   "${SSE_FLAGS} -O3 -g -fno-omit-frame-pointer"
 )
+
+if(NOT CMAKE_CXX_STANDARD)
+	set(CMAKE_CXX_STANDARD 17)
+	set(CMAKE_CXX_STANDARD_REQUIRED ON)
+endif()
 
 if (MSVC)
      set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")

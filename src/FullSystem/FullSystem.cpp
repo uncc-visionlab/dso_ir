@@ -59,7 +59,7 @@
 namespace dso
 {
 int FrameHessian::instanceCounter=0;
-int PointHessian::instanceCounter=0;
+int PointHessianBase::instanceCounter=0;
 int CalibHessian::instanceCounter=0;
 
 
@@ -798,6 +798,99 @@ void FullSystem::flagPointsForRemoval()
 
 }
 
+    void FullSystem::addActiveFrameIR(ImageAndExposure *image, int id) {
+        if (isLost) return;
+        boost::unique_lock<boost::mutex> lock(trackMutex);
+
+
+        // =========================== add into allFrameHistory =========================
+        FrameHessian *fh = new FrameHessian();
+        FrameShell *shell = new FrameShell();
+        shell->camToWorld = SE3();        // no lock required, as fh is not used anywhere yet.
+        shell->aff_g2l = AffLight(0, 0);
+        shell->marginalizedAt = shell->id = allFrameHistory.size();
+        shell->timestamp = image->timestamp;
+        shell->incoming_id = id;
+        fh->shell = shell;
+        allFrameHistory.push_back(shell);
+
+
+        // =========================== make Images / derivatives etc. =========================
+        fh->ab_exposure = image->exposure_time;
+        fh->makeImages(image->image, &Hcalib);
+
+        if (!initialized) {
+            // use initializer!
+            if (coarseInitializer->frameID < 0)    // first frame set. fh is kept by coarseInitializer.
+            {
+
+                coarseInitializer->setFirst(&Hcalib, fh);
+            } else if (coarseInitializer->trackFrame(fh, outputWrapper))    // if SNAPPED
+            {
+
+                initializeFromInitializer(fh);
+                lock.unlock();
+                deliverTrackedFrame(fh, true);
+            } else {
+                // if still initializing
+                fh->shell->poseValid = false;
+                delete fh;
+                fh = nullptr;
+            }
+//            return;
+        } else    // do front-end operation.
+        {
+            // =========================== SWAP tracking reference?. =========================
+            if (coarseTracker_forNewKF->refFrameID > coarseTracker->refFrameID) {
+                boost::unique_lock<boost::mutex> crlock(coarseTrackerSwapMutex);
+                CoarseTracker *tmp = coarseTracker;
+                coarseTracker = coarseTracker_forNewKF;
+                coarseTracker_forNewKF = tmp;
+            }
+
+
+            Vec4 tres = trackNewCoarse(fh);
+            if (!std::isfinite((double) tres[0]) || !std::isfinite((double) tres[1]) ||
+                !std::isfinite((double) tres[2]) || !std::isfinite((double) tres[3])) {
+                printf("Initial Tracking failed: LOST!\n");
+                isLost = true;
+//                return;
+            }
+            else {
+            bool needToMakeKF = false;
+            if (setting_keyframesPerSecond > 0) {
+                needToMakeKF = allFrameHistory.size() == 1 ||
+                               (fh->shell->timestamp - allKeyFramesHistory.back()->timestamp) >
+                               0.95f / setting_keyframesPerSecond;
+            } else {
+                Vec2 refToFh = AffLight::fromToVecExposure(coarseTracker->lastRef->ab_exposure, fh->ab_exposure,
+                                                           coarseTracker->lastRef_aff_g2l, fh->shell->aff_g2l);
+
+                // BRIGHTNESS CHECK
+                needToMakeKF = allFrameHistory.size() == 1 ||
+                               setting_kfGlobalWeight * setting_maxShiftWeightT * sqrtf((double) tres[1]) /
+                               (wG[0] + hG[0]) +
+                               setting_kfGlobalWeight * setting_maxShiftWeightR * sqrtf((double) tres[2]) /
+                               (wG[0] + hG[0]) +
+                               setting_kfGlobalWeight * setting_maxShiftWeightRT * sqrtf((double) tres[3]) /
+                               (wG[0] + hG[0]) +
+                               setting_kfGlobalWeight * setting_maxAffineWeight * fabs(logf((float) refToFh[0])) > 1 ||
+                               2 * coarseTracker->firstCoarseRMSE < tres[0];
+
+            }
+
+
+            for (IOWrap::Output3DWrapper *ow: outputWrapper)
+                ow->publishCamPose(fh->shell, &Hcalib);
+
+
+            lock.unlock();
+            deliverTrackedFrame(fh, needToMakeKF);
+//            return;
+        }
+        }
+        prev_fh = fh;
+    }
 
 void FullSystem::addActiveFrame( ImageAndExposure* image, int id )
 {
@@ -1108,7 +1201,7 @@ void FullSystem::makeKeyFrame( FrameHessian* fh)
 	{
 		if(allKeyFramesHistory.size()==2 && rmse > 20*benchmark_initializerSlackFactor)
 		{
-			printf("I THINK INITIALIZATINO FAILED! Resetting.\n");
+			printf("I THINK INITIALIZATION FAILED! Resetting.\n");
 			initFailed=true;
 		}
 		if(allKeyFramesHistory.size()==3 && rmse > 13*benchmark_initializerSlackFactor)
