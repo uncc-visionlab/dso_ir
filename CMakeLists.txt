@@ -24,7 +24,7 @@ link_directories(
 # optional libraries
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(Eigen3 REQUIRED)
-find_package(Boost COMPONENTS system thread) 
+find_package(Boost COMPONENTS filesystem timer chrono system thread) 
 find_package(SuiteParse REQUIRED)
 set(LIBZIP_INCLUDE_DIR_ZIP /usr/include)
 set(LIBZIP_INCLUDE_DIR_ZIPCONF /usr/lib/x86_64-linux-gnu/libzip/include)
@@ -78,6 +78,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/thirdparty/Sophus
   ${PROJECT_SOURCE_DIR}/thirdparty/sse2neon
   ${EIGEN3_INCLUDE_DIR}
+  ${Boost_INCLUDE_DIRS}
 ) 
 
 
@@ -128,7 +129,7 @@ endif()
 # compile main library.
 include_directories( ${CSPARSE_INCLUDE_DIR} ${CHOLMOD_INCLUDE_DIR}) 
 add_library(dso ${dso_SOURCE_FILES} ${dso_opencv_SOURCE_FILES} ${dso_pangolin_SOURCE_FILES})
-target_link_libraries(dso ${Pangolin_LIBRARIES})
+target_link_libraries(dso ${Pangolin_LIBRARIES} ${Boost_LIBRARIES})
 #set_property( TARGET dso APPEND_STRING PROPERTY COMPILE_FLAGS -Wall )
 
 
