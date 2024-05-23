@@ -29,7 +29,7 @@
 #include "util/NumType.h"
 #include "util/globalCalib.h"
 #include "vector"
- 
+
 #include <iostream>
 #include <fstream>
 #include "util/NumType.h"
@@ -42,257 +42,281 @@
 
 #include <math.h>
 
-namespace dso
-{
-namespace IOWrap
-{
-class Output3DWrapper;
-}
-
-class PixelSelector;
-class PCSyntheticPoint;
-class CoarseTracker;
-struct FrameHessian;
-struct PointHessian;
-class CoarseInitializer;
-struct ImmaturePointTemporaryResidual;
-class ImageAndExposure;
-class CoarseDistanceMap;
-
-class EnergyFunctional;
-
-template<typename T> inline void deleteOut(std::vector<T*> &v, const int i)
-{
-	delete v[i];
-	v[i] = v.back();
-	v.pop_back();
-}
-template<typename T> inline void deleteOutPt(std::vector<T*> &v, const T* i)
-{
-	delete i;
+namespace dso {
+    namespace IOWrap {
+        class Output3DWrapper;
+    }
 
-	for(unsigned int k=0;k<v.size();k++)
-		if(v[k] == i)
-		{
-			v[k] = v.back();
-			v.pop_back();
-		}
-}
-template<typename T> inline void deleteOutOrder(std::vector<T*> &v, const int i)
-{
-	delete v[i];
-	for(unsigned int k=i+1; k<v.size();k++)
-		v[k-1] = v[k];
-	v.pop_back();
-}
-template<typename T> inline void deleteOutOrder(std::vector<T*> &v, const T* element)
-{
-	int i=-1;
-	for(unsigned int k=0; k<v.size();k++)
-	{
-		if(v[k] == element)
-		{
-			i=k;
-			break;
-		}
-	}
-	assert(i!=-1);
+    class PixelSelector;
 
-	for(unsigned int k=i+1; k<v.size();k++)
-		v[k-1] = v[k];
-	v.pop_back();
+    class PCSyntheticPoint;
 
-	delete element;
-}
-
-
-inline bool eigenTestNan(const MatXX &m, std::string msg)
-{
-	bool foundNan = false;
-	for(int y=0;y<m.rows();y++)
-		for(int x=0;x<m.cols();x++)
-		{
-			if(!std::isfinite((double)m(y,x))) foundNan = true;
-		}
+    class CoarseTracker;
 
-	if(foundNan)
-	{
-		printf("NAN in %s:\n",msg.c_str());
-		std::cout << m << "\n\n";
-	}
+    struct FrameHessian;
+    struct PointHessian;
 
+    class CoarseInitializer;
 
-	return foundNan;
-}
+    struct ImmaturePointTemporaryResidual;
 
+    class ImageAndExposure;
 
+    class CoarseDistanceMap;
 
-
-
-class FullSystem {
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-	FullSystem();
-	virtual ~FullSystem();
-
-	// adds a new frame, and creates point & residual structs.
-    void addActiveFrame(ImageAndExposure* image, int id);
-    void addActiveFrameIR(ImageAndExposure* image, int id);
-
-	// marginalizes a frame. drops / marginalizes points & residuals.
-	void marginalizeFrame(FrameHessian* frame);
-	void blockUntilMappingIsFinished();
-
-	float optimize(int mnumOptIts);
+    class EnergyFunctional;
 
-	void printResult(std::string file);
+    template<typename T>
+    inline void deleteOut(std::vector<T *> &v, const int i) {
+        delete v[i];
+        v[i] = v.back();
+        v.pop_back();
+    }
 
-	void debugPlot(std::string name);
+    template<typename T>
+    inline void deleteOutPt(std::vector<T *> &v, const T *i) {
+        delete i;
 
-	void printFrameLifetimes();
-	// contains pointers to active frames
+        for (unsigned int k = 0; k < v.size(); k++)
+            if (v[k] == i) {
+                v[k] = v.back();
+                v.pop_back();
+            }
+    }
 
-    std::vector<IOWrap::Output3DWrapper*> outputWrapper;
+    template<typename T>
+    inline void deleteOutOrder(std::vector<T *> &v, const int i) {
+        delete v[i];
+        for (unsigned int k = i + 1; k < v.size(); k++)
+            v[k - 1] = v[k];
+        v.pop_back();
+    }
 
-	bool isLost;
-	bool initFailed;
-	bool initialized;
-	bool linearizeOperation;
+    template<typename T>
+    inline void deleteOutOrder(std::vector<T *> &v, const T *element) {
+        int i = -1;
+        for (unsigned int k = 0; k < v.size(); k++) {
+            if (v[k] == element) {
+                i = k;
+                break;
+            }
+        }
+        assert(i != -1);
 
+        for (unsigned int k = i + 1; k < v.size(); k++)
+            v[k - 1] = v[k];
+        v.pop_back();
 
-	void setGammaFunction(float* BInv);
-	void setOriginalCalib(const VecXf &originalCalib, int originalW, int originalH);
+        delete element;
+    }
 
-private:
 
-	CalibHessian Hcalib;
+    inline bool eigenTestNan(const MatXX &m, std::string msg) {
+        bool foundNan = false;
+        for (int y = 0; y < m.rows(); y++)
+            for (int x = 0; x < m.cols(); x++) {
+                if (!std::isfinite((double) m(y, x))) foundNan = true;
+            }
 
+        if (foundNan) {
+            printf("NAN in %s:\n", msg.c_str());
+            std::cout << m << "\n\n";
+        }
 
 
+        return foundNan;
+    }
 
-	// opt single point
-	int optimizePoint(PointHessian* point, int minObs, bool flagOOB);
-	PointHessian* optimizeImmaturePoint(ImmaturePoint* point, int minObs, ImmaturePointTemporaryResidual* residuals);
 
-	double linAllPointSinle(PointHessian* point, float outlierTHSlack, bool plot);
+    class FullSystem {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-	// mainPipelineFunctions
-	Vec4 trackNewCoarse(FrameHessian* fh);
-	void traceNewCoarse(FrameHessian* fh);
-	void activatePoints();
-	void activatePointsMT();
-	void activatePointsOldFirst();
-	void flagPointsForRemoval();
-	void makeNewTraces(FrameHessian* newFrame, float* gtDepth);
-	void initializeFromInitializer(FrameHessian* newFrame);
-	void flagFramesForMarginalization(FrameHessian* newFH);
+        FullSystem();
 
+        virtual ~FullSystem();
 
-	void removeOutliers();
+        // adds a new frame, and creates point & residual structs.
+        // JZ modification: previous frame
+        void addActiveFrame(ImageAndExposure *imagePrev, ImageAndExposure *image, int id);
 
+        // marginalizes a frame. drops / marginalizes points & residuals.
+        void marginalizeFrame(FrameHessian *frame);
 
-	// set precalc values.
-	void setPrecalcValues();
+        void blockUntilMappingIsFinished();
 
+        float optimize(int mnumOptIts);
 
-	// solce. eventually migrate to ef.
-	void solveSystem(int iteration, double lambda);
-	Vec3 linearizeAll(bool fixLinearization);
-	bool doStepFromBackup(float stepfacC,float stepfacT,float stepfacR,float stepfacA,float stepfacD);
-	void backupState(bool backupLastStep);
-	void loadSateBackup();
-	double calcLEnergy();
-	double calcMEnergy();
-	void linearizeAll_Reductor(bool fixLinearization, std::vector<PointFrameResidual*>* toRemove, int min, int max, Vec10* stats, int tid);
-	void activatePointsMT_Reductor(std::vector<PointHessian*>* optimized,std::vector<ImmaturePoint*>* toOptimize,int min, int max, Vec10* stats, int tid);
-	void applyRes_Reductor(bool copyJacobians, int min, int max, Vec10* stats, int tid);
+        void printResult(std::string file);
 
-	void printOptRes(const Vec3 &res, double resL, double resM, double resPrior, double LExact, float a, float b);
+        void debugPlot(std::string name);
 
-	void debugPlotTracking();
+        void printFrameLifetimes();
+        // contains pointers to active frames
 
-	std::vector<VecX> getNullspaces(
-			std::vector<VecX> &nullspaces_pose,
-			std::vector<VecX> &nullspaces_scale,
-			std::vector<VecX> &nullspaces_affA,
-			std::vector<VecX> &nullspaces_affB);
+        std::vector<IOWrap::Output3DWrapper *> outputWrapper;
 
-	void setNewFrameEnergyTH();
+        bool isLost;
+        bool initFailed;
+        bool initialized;
+        bool linearizeOperation;
 
 
-	void printLogLine();
-	void printEvalLine();
-	void printEigenValLine();
-	std::ofstream* calibLog;
-	std::ofstream* numsLog;
-	std::ofstream* errorsLog;
-	std::ofstream* eigenAllLog;
-	std::ofstream* eigenPLog;
-	std::ofstream* eigenALog;
-	std::ofstream* DiagonalLog;
-	std::ofstream* variancesLog;
-	std::ofstream* nullspacesLog;
+        void setGammaFunction(float *BInv);
 
-	std::ofstream* coarseTrackingLog;
+        void setOriginalCalib(const VecXf &originalCalib, int originalW, int originalH);
 
-	// statistics
-	long int statistics_lastNumOptIts;
-	long int statistics_numDroppedPoints;
-	long int statistics_numActivatedPoints;
-	long int statistics_numCreatedPoints;
-	long int statistics_numForceDroppedResBwd;
-	long int statistics_numForceDroppedResFwd;
-	long int statistics_numMargResFwd;
-	long int statistics_numMargResBwd;
-	float statistics_lastFineTrackRMSE;
+    private:
 
+        CalibHessian Hcalib;
 
 
+        // opt single point
+        int optimizePoint(PointHessian *point, int minObs, bool flagOOB);
 
+        PointHessian *
+        optimizeImmaturePoint(ImmaturePoint *point, int minObs, ImmaturePointTemporaryResidual *residuals);
 
+        double linAllPointSinle(PointHessian *point, float outlierTHSlack, bool plot);
 
+        // mainPipelineFunctions
+        // JZ modification: previous frame
+        Vec4 trackNewCoarse(FrameHessian *fhPrev, FrameHessian *fh);
 
-	// =================== changed by tracker-thread. protected by trackMutex ============
-	boost::mutex trackMutex;
-	std::vector<FrameShell*> allFrameHistory;
-	CoarseInitializer* coarseInitializer;
-	Vec5 lastCoarseRMSE;
+        void traceNewCoarse(FrameHessian *fhPrev, FrameHessian *fh);
 
+        void activatePoints();
 
-	// ================== changed by mapper-thread. protected by mapMutex ===============
-	boost::mutex mapMutex;
-	std::vector<FrameShell*> allKeyFramesHistory;
+        void activatePointsMT();
 
-	EnergyFunctional* ef;
-	IndexThreadReduce<Vec10> treadReduce;
+        void activatePointsOldFirst();
 
-	float* selectionMap;
-	PixelSelector* pixelSelector;
-	CoarseDistanceMap* coarseDistanceMap;
+        void flagPointsForRemoval();
 
-	std::vector<FrameHessian*> frameHessians;	// ONLY changed in marginalizeFrame and addFrame.
-    FrameHessian* prev_fh;
-	std::vector<PointFrameResidual*> activeResiduals;
-	float currentMinActDist;
+        // JZ modification: previous frame
+        void makeNewTraces(FrameHessian *prevFrame, FrameHessian *newFrame, float *gtDepth);
 
+        // JZ modification: previous frame
+        void initializeFromInitializer(FrameHessian *prevFrame, FrameHessian *newFrame);
 
-	std::vector<float> allResVec;
+        void flagFramesForMarginalization(FrameHessian *newFH);
 
 
+        void removeOutliers();
 
-	// mutex etc. for tracker exchange.
-	boost::mutex coarseTrackerSwapMutex;			// if tracker sees that there is a new reference, tracker locks [coarseTrackerSwapMutex] and swaps the two.
-	CoarseTracker* coarseTracker_forNewKF;			// set as as reference. protected by [coarseTrackerSwapMutex].
-	CoarseTracker* coarseTracker;					// always used to track new frames. protected by [trackMutex].
-	float minIdJetVisTracker, maxIdJetVisTracker;
-	float minIdJetVisDebug, maxIdJetVisDebug;
 
+        // set precalc values.
+        void setPrecalcValues();
 
 
+        // solce. eventually migrate to ef.
+        void solveSystem(int iteration, double lambda);
 
+        Vec3 linearizeAll(bool fixLinearization);
 
-	// mutex for camToWorl's in shells (these are always in a good configuration).
-	boost::mutex shellPoseMutex;
+        bool doStepFromBackup(float stepfacC, float stepfacT, float stepfacR, float stepfacA, float stepfacD);
+
+        void backupState(bool backupLastStep);
+
+        void loadSateBackup();
+
+        double calcLEnergy();
+
+        double calcMEnergy();
+
+        void linearizeAll_Reductor(bool fixLinearization, std::vector<PointFrameResidual *> *toRemove, int min, int max,
+                                   Vec10 *stats, int tid);
+
+        void activatePointsMT_Reductor(std::vector<PointHessian *> *optimized, std::vector<ImmaturePoint *> *toOptimize,
+                                       int min, int max, Vec10 *stats, int tid);
+
+        void applyRes_Reductor(bool copyJacobians, int min, int max, Vec10 *stats, int tid);
+
+        void printOptRes(const Vec3 &res, double resL, double resM, double resPrior, double LExact, float a, float b);
+
+        void debugPlotTracking();
+
+        // JZ modification: affLight
+        std::vector<VecX> getNullspaces(
+                std::vector<VecX> &nullspaces_pose,
+                std::vector<VecX> &nullspaces_scale,
+                std::vector<VecX> &nullspaces_affA,
+                std::vector<VecX> &nullspaces_affB);
+
+        void setNewFrameEnergyTH();
+
+
+        void printLogLine();
+
+        void printEvalLine();
+
+        void printEigenValLine();
+
+        std::ofstream *calibLog;
+        std::ofstream *numsLog;
+        std::ofstream *errorsLog;
+        std::ofstream *eigenAllLog;
+        std::ofstream *eigenPLog;
+        std::ofstream *eigenALog;
+        std::ofstream *DiagonalLog;
+        std::ofstream *variancesLog;
+        std::ofstream *nullspacesLog;
+
+        std::ofstream *coarseTrackingLog;
+
+        // statistics
+        long int statistics_lastNumOptIts;
+        long int statistics_numDroppedPoints;
+        long int statistics_numActivatedPoints;
+        long int statistics_numCreatedPoints;
+        long int statistics_numForceDroppedResBwd;
+        long int statistics_numForceDroppedResFwd;
+        long int statistics_numMargResFwd;
+        long int statistics_numMargResBwd;
+        float statistics_lastFineTrackRMSE;
+
+
+        // JZ modification: previous frame and a vector of the previous frame of keyframes
+        //FrameHessian* fhPrev;
+        std::vector<FrameHessian *> frameHessiansPrev;
+
+
+        // =================== changed by tracker-thread. protected by trackMutex ============
+        boost::mutex trackMutex;
+        std::vector<FrameShell *> allFrameHistory;
+        CoarseInitializer *coarseInitializer;
+        Vec5 lastCoarseRMSE;
+
+
+        // ================== changed by mapper-thread. protected by mapMutex ===============
+        boost::mutex mapMutex;
+        std::vector<FrameShell *> allKeyFramesHistory;
+
+        EnergyFunctional *ef;
+        IndexThreadReduce<Vec10> treadReduce;
+
+        float *selectionMap;
+        PixelSelector *pixelSelector;
+        CoarseDistanceMap *coarseDistanceMap;
+
+        std::vector<FrameHessian *> frameHessians;    // ONLY changed in marginalizeFrame and addFrame.
+        std::vector<PointFrameResidual *> activeResiduals;
+        float currentMinActDist;
+
+
+        std::vector<float> allResVec;
+
+
+        // mutex etc. for tracker exchange.
+        boost::mutex coarseTrackerSwapMutex;            // if tracker sees that there is a new reference, tracker locks [coarseTrackerSwapMutex] and swaps the two.
+        CoarseTracker *coarseTracker_forNewKF;            // set as as reference. protected by [coarseTrackerSwapMutex].
+        CoarseTracker *coarseTracker;                    // always used to track new frames. protected by [trackMutex].
+        float minIdJetVisTracker, maxIdJetVisTracker;
+        float minIdJetVisDebug, maxIdJetVisDebug;
+
+
+        // mutex for camToWorl's in shells (these are always in a good configuration).
+        boost::mutex shellPoseMutex;
 
 
 
@@ -300,23 +324,36 @@ private:
  * tracking always uses the newest KF as reference.
  *
  */
+        // JZ modification: previous frame
+        void makeKeyFrame(FrameHessian *fhPrev, FrameHessian *fh);
 
-	void makeKeyFrame( FrameHessian* fh);
-	void makeNonKeyFrame( FrameHessian* fh);
-	void deliverTrackedFrame(FrameHessian* fh, bool needKF);
-	void mappingLoop();
+        void makeNonKeyFrame(FrameHessian *fhPrev, FrameHessian *fh);
 
-	// tracking / mapping synchronization. All protected by [trackMapSyncMutex].
-	boost::mutex trackMapSyncMutex;
-	boost::condition_variable trackedFrameSignal;
-	boost::condition_variable mappedFrameSignal;
-	std::deque<FrameHessian*> unmappedTrackedFrames;
-	int needNewKFAfter;	// Otherwise, a new KF is *needed that has ID bigger than [needNewKFAfter]*.
-	boost::thread mappingThread;
-	bool runMapping;
-	bool needToKetchupMapping;
+        // JZ modification: previous frame
+        void deliverTrackedFrame(FrameHessian *fhPrev, FrameHessian *fh, bool needKF);
 
-	int lastRefStopID;
-};
+        void mappingLoop();
+
+        void reportTrackingTime(FrameHessian *fh);
+
+        // tracking / mapping synchronization. All protected by [trackMapSyncMutex].
+        boost::mutex trackMapSyncMutex;
+        boost::condition_variable trackedFrameSignal;
+        boost::condition_variable mappedFrameSignal;
+        std::deque<FrameHessian *> unmappedTrackedFrames;
+        // JZ modification: previous frame
+        std::deque<FrameHessian *> unmappedTrackedPreviousFrames;
+        int needNewKFAfter;    // Otherwise, a new KF is *needed that has ID bigger than [needNewKFAfter]*.
+        boost::thread mappingThread;
+        bool runMapping;
+        bool needToKetchupMapping;
+
+        int lastRefStopID;
+
+        // timings
+        struct timeval last_track;
+        std::deque<float> lastNTrackingMs;
+        boost::mutex trackingTimingMutex;
+    };
 }
 

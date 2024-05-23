@@ -24,83 +24,92 @@
 
 #pragma once
 
- 
+
 #include "util/globalCalib.h"
 #include "vector"
- 
+
 #include "util/NumType.h"
 #include <iostream>
 #include <fstream>
 #include "util/globalFuncs.h"
 #include "OptimizationBackend/RawResidualJacobian.h"
 
-namespace dso
-{
-class PointHessian;
-class FrameHessian;
-class CalibHessian;
+namespace dso {
+    class PointHessian;
 
-class EFResidual;
+    class FrameHessian;
 
+    class CalibHessian;
 
-enum ResLocation {ACTIVE=0, LINEARIZED, MARGINALIZED, NONE};
-enum ResState {IN=0, OOB, OUTLIER};
-
-struct FullJacRowT
-{
-	Eigen::Vector2f projectedTo[MAX_RES_PER_POINT];
-};
-
-class PointFrameResidual
-{
-public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-
-	EFResidual* efResidual;
-
-	static int instanceCounter;
+    class EFResidual;
 
 
-	ResState state_state;
-	double state_energy;
-	ResState state_NewState;
-	double state_NewEnergy;
-	double state_NewEnergyWithOutlier;
+    enum ResLocation {
+        ACTIVE = 0, LINEARIZED, MARGINALIZED, NONE
+    };
+    enum ResState {
+        IN = 0, OOB, OUTLIER
+    };
+
+    struct FullJacRowT {
+        Eigen::Vector2f projectedTo[MAX_RES_PER_POINT];
+    };
+
+    class PointFrameResidual {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+
+        EFResidual *efResidual;
+
+        static int instanceCounter;
 
 
-	void setState(ResState s) {state_state = s;}
+        ResState state_state;
+        double state_energy;
+        ResState state_NewState;
+        double state_NewEnergy;
+        double state_NewEnergyWithOutlier;
 
 
-	PointHessian* point;
-	FrameHessian* host;
-	FrameHessian* target;
-	RawResidualJacobian* J;
+        void setState(ResState s) { state_state = s; }
 
 
-	bool isNew;
+        PointHessian *point;
+        FrameHessian *host;
+        FrameHessian *target;
+        // JZ modification: previous frame
+        FrameHessian *targetPrev;
+        RawResidualJacobian *J;
 
 
-	Eigen::Vector2f projectedTo[MAX_RES_PER_POINT];
-	Vec3f centerProjectedTo;
-
-	~PointFrameResidual();
-	PointFrameResidual();
-	PointFrameResidual(PointHessian* point_, FrameHessian* host_, FrameHessian* target_);
-	double linearize(CalibHessian* HCalib);
+        bool isNew;
 
 
-	void resetOOB()
-	{
-		state_NewEnergy = state_energy = 0;
-		state_NewState = ResState::OUTLIER;
+        Eigen::Vector2f projectedTo[MAX_RES_PER_POINT];
+        Vec3f centerProjectedTo;
 
-		setState(ResState::IN);
-	};
-	void applyRes( bool copyJacobians);
+        ~PointFrameResidual();
 
-	void debugPlot();
+        PointFrameResidual();
 
-	void printRows(std::vector<VecX> &v, VecX &r, int nFrames, int nPoints, int M, int res);
-};
+        // JZ modification: previous frame
+        PointFrameResidual(PointHessian *point_, FrameHessian *host_, FrameHessian *target_, FrameHessian *targetPrev_);
+
+        double linearize(CalibHessian *HCalib);
+
+
+        void resetOOB() {
+            state_NewEnergy = state_energy = 0;
+            state_NewState = ResState::OUTLIER;
+
+            setState(ResState::IN);
+        };
+
+        void applyRes(bool copyJacobians);
+
+        void debugPlot();
+
+        void printRows(std::vector<VecX> &v, VecX &r, int nFrames, int nPoints, int M, int res);
+    };
 }
 

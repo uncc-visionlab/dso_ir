@@ -24,6 +24,7 @@
 
 
 #pragma once
+
 #include <vector>
 #include <string>
 
@@ -32,18 +33,18 @@
 #include "map"
 
 namespace cv {
-        class Mat;
+    class Mat;
 }
 
-namespace dso
-{
+namespace dso {
 
-class FrameHessian;
-class CalibHessian;
-class FrameShell;
+    class FrameHessian;
 
-namespace IOWrap
-{
+    class CalibHessian;
+
+    class FrameShell;
+
+    namespace IOWrap {
 
 /* ======================= Some typical usecases: ===============
  *
@@ -110,100 +111,89 @@ namespace IOWrap
 
 
 
-class Output3DWrapper
-{
-public:
-        Output3DWrapper() {}
-        virtual ~Output3DWrapper() {}
+        class Output3DWrapper {
+        public:
+            Output3DWrapper() {}
+
+            virtual ~Output3DWrapper() {}
 
 
-        /*  Usage:
-         *  Called once after each new Keyframe is inserted & optimized.
-         *  [connectivity] contains for each frame-frame pair the number of [0] active residuals in between them,
-         *  and [1] the number of marginalized reisduals between them.
-         *  frame-frame pairs are encoded as HASH_IDX = [(int)hostFrameKFID << 32 + (int)targetFrameKFID].
-         *  the [***frameKFID] used for hashing correspond to the [FrameHessian]->frameID.
-         *
-         *  Calling:
-         *  Always called, no overhead if not used.
-         */
-        virtual void publishGraph(const std::map<uint64_t,Eigen::Vector2i, std::less<uint64_t>, Eigen::aligned_allocator<std::pair<const uint64_t, Eigen::Vector2i> > > &connectivity) {}
+            /*  Usage:
+             *  Called once after each new Keyframe is inserted & optimized.
+             *  [connectivity] contains for each frame-frame pair the number of [0] active residuals in between them,
+             *  and [1] the number of marginalized reisduals between them.
+             *  frame-frame pairs are encoded as HASH_IDX = [(int)hostFrameKFID << 32 + (int)targetFrameKFID].
+             *  the [***frameKFID] used for hashing correspond to the [FrameHessian]->frameID.
+             *
+             *  Calling:
+             *  Always called, no overhead if not used.
+             */
+            virtual void publishGraph(
+                    const std::map<uint64_t, Eigen::Vector2i, std::less<uint64_t>, Eigen::aligned_allocator<std::pair<const uint64_t, Eigen::Vector2i> > > &connectivity) {}
 
 
+            /* Usage:
+             * Called after each new Keyframe is inserted & optimized, with all keyframes that were part of the active window during
+             * that optimization in [frames] (with final=false). Use to access the new frame pose and points.
+             * Also called just before a frame is marginalized (with final=true) with only that frame in [frames]; at that point,
+             * no further updates will ever occur to it's optimized values (pose & idepth values of it's points).
+             *
+             * If you want always all most recent values for all frames, just use the [final=false] calls.
+             * If you only want to get the final model, but don't care about it being delay-free, only use the
+             * [final=true] calls, to save compute.
+             *
+             * Calling:
+             * Always called, negligible overhead if not used.
+             */
+            virtual void publishKeyframes(std::vector<FrameHessian *> &frames, bool final, CalibHessian *HCalib) {}
 
 
-
-        /* Usage:
-         * Called after each new Keyframe is inserted & optimized, with all keyframes that were part of the active window during
-         * that optimization in [frames] (with final=false). Use to access the new frame pose and points.
-         * Also called just before a frame is marginalized (with final=true) with only that frame in [frames]; at that point,
-         * no further updates will ever occur to it's optimized values (pose & idepth values of it's points).
-         *
-         * If you want always all most recent values for all frames, just use the [final=false] calls.
-         * If you only want to get the final model, but don't care about it being delay-free, only use the
-         * [final=true] calls, to save compute.
-         *
-         * Calling:
-         * Always called, negligible overhead if not used.
-         */
-        virtual void publishKeyframes(std::vector<FrameHessian*> &frames, bool final, CalibHessian* HCalib) {}
+            /* Usage:
+             * Called once for each tracked frame, with the real-time, low-delay frame pose.
+             *
+             * Calling:
+             * Always called, no overhead if not used.
+             */
+            virtual void publishCamPose(FrameShell *frame, CalibHessian *HCalib) {}
 
 
+            /* Usage:
+             * Called once for each new frame, before it is tracked (i.e., it doesn't have a pose yet).
+             *
+             * Calling:
+             * Always called, no overhead if not used.
+             */
+            virtual void pushLiveFrame(FrameHessian *image) {}
 
 
+            /* called once after a new keyframe is created, with the color-coded, forward-warped inverse depthmap for that keyframe,
+             * which is used for initial alignment of future frames. Meant for visualization.
+             *
+             * Calling:
+             * Needs to prepare the depth image, so it is only called if [needPushDepthImage()] returned true.
+             */
+            virtual void pushDepthImage(MinimalImageB3 *image) {}
 
-        /* Usage:
-         * Called once for each tracked frame, with the real-time, low-delay frame pose.
-         *
-         * Calling:
-         * Always called, no overhead if not used.
-         */
-        virtual void publishCamPose(FrameShell* frame, CalibHessian* HCalib) {}
-
-
-
+            virtual bool needPushDepthImage() { return false; }
 
 
-        /* Usage:
-         * Called once for each new frame, before it is tracked (i.e., it doesn't have a pose yet).
-         *
-         * Calling:
-         * Always called, no overhead if not used.
-         */
-        virtual void pushLiveFrame(FrameHessian* image) {}
+            /* Usage:
+             * called once after a new keyframe is created, with the forward-warped inverse depthmap for that keyframe.
+             * (<= 0 for pixels without inv. depth value, >0 for pixels with inv. depth value)
+             *
+             * Calling:
+             * Always called, almost no overhead if not used.
+             */
+            virtual void pushDepthImageFloat(MinimalImageF *image, FrameHessian *KF) {}
 
 
+            /* call on finish */
+            virtual void join() {}
 
+            /* call on reset */
+            virtual void reset() {}
 
-        /* called once after a new keyframe is created, with the color-coded, forward-warped inverse depthmap for that keyframe,
-         * which is used for initial alignment of future frames. Meant for visualization.
-         *
-         * Calling:
-         * Needs to prepare the depth image, so it is only called if [needPushDepthImage()] returned true.
-         */
-        virtual void pushDepthImage(MinimalImageB3* image) {}
-        virtual bool needPushDepthImage() {return false;}
+        };
 
-
-
-        /* Usage:
-         * called once after a new keyframe is created, with the forward-warped inverse depthmap for that keyframe.
-         * (<= 0 for pixels without inv. depth value, >0 for pixels with inv. depth value)
-         *
-         * Calling:
-         * Always called, almost no overhead if not used.
-         */
-        virtual void pushDepthImageFloat(MinimalImageF* image, FrameHessian* KF ) {}
-
-
-
-        /* call on finish */
-        virtual void join() {}
-
-        /* call on reset */
-        virtual void reset() {}
-
-};
-
-}
+    }
 }

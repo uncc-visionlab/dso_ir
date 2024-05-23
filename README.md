@@ -97,7 +97,18 @@ See [https://github.com/JakobEngel/dso_ros](https://github.com/JakobEngel/dso_ro
 how the library can be used from another project. It should be straight forward to implement extentions for 
 other camera drivers, to use DSO interactively without ROS.
 
-
+Run on IR data with a simple nonlinear correction model
+```
+bin/dso_dataset files=../dataset/data/images_ir_pt1_straight.zip calib=../dataset/data/camera_ir.txt preset=0 mode=1 sampleoutput=1 ir_data=1 ir_cor_model=1 nogui=0
+```
+Run on IR data with the optimal correction model
+```
+bin/dso_dataset files=../dataset/data/images_ir_pt1_straight.zip calib=../dataset/data/camera_ir.txt preset=0 mode=1 sampleoutput=1 ir_data=1 ir_cor_model=0 nogui=0
+```
+Run on IR data with the DSO-RGB correction model
+```
+bin/dso_dataset files=../dataset/data/images_ir_pt1_straight.zip calib=../dataset/data/camera_ir.txt preset=0 mode=1 sampleoutput=1 ir_data=0 nogui=0
+```
 
 #### 3.1 Dataset Format.
 The format assumed is that of [https://vision.in.tum.de/mono-dataset](https://vision.in.tum.de/mono-dataset).

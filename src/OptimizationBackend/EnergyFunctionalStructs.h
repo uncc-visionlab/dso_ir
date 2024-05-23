@@ -24,145 +24,145 @@
 
 #pragma once
 
- 
+
 #include "util/NumType.h"
 #include "vector"
 #include <math.h>
 #include "OptimizationBackend/RawResidualJacobian.h"
 
-namespace dso
-{
+namespace dso {
 
-class PointFrameResidual;
-class CalibHessian;
-class FrameHessian;
-class PointHessian;
+    class PointFrameResidual;
 
-class EFResidual;
-class EFPoint;
-class EFFrame;
-class EnergyFunctional;
+    class CalibHessian;
 
+    class FrameHessian;
 
+    class PointHessian;
 
+    class EFResidual;
 
+    class EFPoint;
 
+    class EFFrame;
 
-class EFResidual
-{
-public:
-	EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-
-	inline EFResidual(PointFrameResidual* org, EFPoint* point_, EFFrame* host_, EFFrame* target_) :
-		data(org), point(point_), host(host_), target(target_)
-	{
-		isLinearized=false;
-		isActiveAndIsGoodNEW=false;
-		J = new RawResidualJacobian();
-		assert(((long)this)%16==0);
-		assert(((long)J)%16==0);
-	}
-	inline ~EFResidual()
-	{
-		delete J;
-	}
+    class EnergyFunctional;
 
 
-	void takeDataF();
+    class EFResidual {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+        inline EFResidual(PointFrameResidual *org, EFPoint *point_, EFFrame *host_, EFFrame *target_) :
+                data(org), point(point_), host(host_), target(target_) {
+            isLinearized = false;
+            isActiveAndIsGoodNEW = false;
+            J = new RawResidualJacobian();
+            assert(((long) this) % 16 == 0);
+            assert(((long) J) % 16 == 0);
+        }
+
+        inline ~EFResidual() {
+            delete J;
+        }
 
 
-	void fixLinearizationF(EnergyFunctional* ef);
+        void takeDataF();
 
 
-	// structural pointers
-	PointFrameResidual* data;
-	int hostIDX, targetIDX;
-	EFPoint* point;
-	EFFrame* host;
-	EFFrame* target;
-	int idxInAll;
-
-	RawResidualJacobian* J;
-
-	VecNRf res_toZeroF;
-	Vec8f JpJdF;
+        void fixLinearizationF(EnergyFunctional *ef);
 
 
-	// status.
-	bool isLinearized;
+        // structural pointers
+        PointFrameResidual *data;
+        int hostIDX, targetIDX;
+        EFPoint *point;
+        EFFrame *host;
+        EFFrame *target;
+        int idxInAll;
 
-	// if residual is not OOB & not OUTLIER & should be used during accumulations
-	bool isActiveAndIsGoodNEW;
-	inline const bool &isActive() const {return isActiveAndIsGoodNEW;}
-};
+        RawResidualJacobian *J;
 
-
-enum EFPointStatus {PS_GOOD=0, PS_MARGINALIZE, PS_DROP};
-
-class EFPoint
-{
-public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-	EFPoint(PointHessian* d, EFFrame* host_) : data(d),host(host_)
-	{
-		takeData();
-		stateFlag=EFPointStatus::PS_GOOD;
-	}
-	void takeData();
-
-	PointHessian* data;
+        VecNRf res_toZeroF;
+        Vec8f JpJdF;
 
 
+        // status.
+        bool isLinearized;
 
-	float priorF;
-	float deltaF;
+        // if residual is not OOB & not OUTLIER & should be used during accumulations
+        bool isActiveAndIsGoodNEW;
 
-
-	// constant info (never changes in-between).
-	int idxInPoints;
-	EFFrame* host;
-
-	// contains all residuals.
-	std::vector<EFResidual*> residualsAll;
-
-	float bdSumF;
-	float HdiF;
-	float Hdd_accLF;
-	VecCf Hcd_accLF;
-	float bd_accLF;
-	float Hdd_accAF;
-	VecCf Hcd_accAF;
-	float bd_accAF;
+        inline const bool &isActive() const { return isActiveAndIsGoodNEW; }
+    };
 
 
-	EFPointStatus stateFlag;
-};
+    enum EFPointStatus {
+        PS_GOOD = 0, PS_MARGINALIZE, PS_DROP
+    };
+
+    class EFPoint {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+        EFPoint(PointHessian *d, EFFrame *host_) : data(d), host(host_) {
+            takeData();
+            stateFlag = EFPointStatus::PS_GOOD;
+        }
+
+        void takeData();
+
+        PointHessian *data;
+
+
+        float priorF;
+        float deltaF;
+
+
+        // constant info (never changes in-between).
+        int idxInPoints;
+        EFFrame *host;
+
+        // contains all residuals.
+        std::vector<EFResidual *> residualsAll;
+
+        float bdSumF;
+        float HdiF;
+        float Hdd_accLF;
+        VecCf Hcd_accLF;
+        float bd_accLF;
+        float Hdd_accAF;
+        VecCf Hcd_accAF;
+        float bd_accAF;
+
+
+        EFPointStatus stateFlag;
+    };
+
+
+    class EFFrame {
+    public:
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+
+        EFFrame(FrameHessian *d) : data(d) {
+            takeData();
+        }
+
+        void takeData();
+
+
+        Vec8 prior;                // prior hessian (diagonal)
+        Vec8 delta_prior;        // = state-state_prior (E_prior = (delta_prior)' * diag(prior) * (delta_prior)
+        Vec8 delta;                // state - state_zero.
 
 
 
-class EFFrame
-{
-public:
-    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
-	EFFrame(FrameHessian* d) : data(d)
-	{
-		takeData();
-	}
-	void takeData();
+        std::vector<EFPoint *> points;
+        FrameHessian *data;
+        int idx;    // idx in frames.
 
-
-	Vec8 prior;				// prior hessian (diagonal)
-	Vec8 delta_prior;		// = state-state_prior (E_prior = (delta_prior)' * diag(prior) * (delta_prior)
-	Vec8 delta;				// state - state_zero.
-
-
-
-	std::vector<EFPoint*> points;
-	FrameHessian* data;
-	int idx;	// idx in frames.
-
-	int frameID;
-};
+        int frameID;
+    };
 
 }
 
